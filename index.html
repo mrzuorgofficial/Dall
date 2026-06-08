@@ -49,7 +49,7 @@
     margin-bottom: 24px;
   }
   .lbl { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; color: #8b8bff; font-weight: 700; margin-bottom: 12px; display: block; }
-  .srv-row, .url-row { display: flex; gap: 12px; }
+  .url-row { display: flex; gap: 12px; }
   .inp {
     flex: 1; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px; padding: 15px 20px; color: #fff; font-size: 0.95rem; font-family: inherit;
@@ -59,7 +59,6 @@
   .btn { padding: 15px 28px; border-radius: 16px; border: none; color: #fff; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap; }
   .btn-gradient { background: linear-gradient(135deg, var(--purple), var(--cyan)); box-shadow: 0 0 25px rgba(124, 92, 255, 0.4); }
   .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 0 35px rgba(0, 201, 255, 0.6); opacity: 0.95; }
-  #srv-status { font-size: 0.8rem; color: #6c6c9c; margin-top: 12px; }
   .preview { display: none; margin-top: 10px; }
   .preview.show { display: block; }
   .divider { border: none; border-top: 1px solid rgba(255, 255, 255, 0.08); margin: 24px 0; }
@@ -82,50 +81,34 @@
     <div class="logo-sub">Download All Media</div>
   </header>
   <div class="card">
-    <label class="lbl">Connect to Backend Environment</label>
-    <div class="srv-row">
-      <input type="text" id="srv-url" class="inp" placeholder="Paste TryCloudflare URL here..." />
-      <button class="btn btn-gradient" onclick="connectServer()">Connect</button>
-    </div>
-    <div id="srv-status">🔴 Disconnected. Paste your live Colab link to start.</div>
-  </div>
-  <div class="card">
-    <label class="lbl">Paste Social Media Video Link</label>
+    <label class="lbl">Paste Any Media Link</label>
     <div class="url-row">
-      <input type="text" id="vurl" class="inp" placeholder="YouTube, TikTok, Instagram, Twitter..." disabled />
-      <button id="fetch-btn" class="btn btn-gradient" onclick="fetchVideoInfo()" disabled>Analyze Link</button>
+      <input type="text" id="vurl" class="inp" placeholder="Paste YouTube, TikTok, Instagram link here..." />
+      <button id="fetch-btn" class="btn btn-gradient" onclick="fetchVideoInfo()">Analyze Link</button>
     </div>
     <div class="preview" id="preview-box">
       <div class="divider"></div>
       <div class="thumb-row">
         <img id="vid-thumb" class="thumb-img" src="" alt="Thumbnail" />
-        <div id="vid-title" class="vid-title">Analyzing...</div>
+        <div id="vid-title" class="vid-title">Analyzing content structures...</div>
       </div>
-      <label class="lbl">Select Your Desired Format</label>
+      <label class="lbl">Select Format Quality</label>
       <div class="fgrid" id="formats-box"></div>
       <div id="dlmsg"></div>
     </div>
   </div>
 </div>
 <script>
-  let serverTarget = "";
-  function connectServer() {
-    let url = document.getElementById('srv-url').value.trim();
-    if (!url) return alert("Paste your Cloudflare tunnel link first!");
-    if (url.endsWith('/')) url = url.slice(0, -1);
-    serverTarget = url;
-    document.getElementById('srv-status').innerHTML = "🟢 Connected to Cloudflare Backend.";
-    document.getElementById('srv-status').style.color = "var(--green)";
-    document.getElementById('vurl').disabled = false;
-    document.getElementById('fetch-btn').disabled = false;
-  }
+  // ⚠️ PASTE YOUR COPIED RENDER URL HERE BETWEEN THE QUOTES:
+  const serverTarget = "https://dall-x7y8.onrender.com";
+
   async function fetchVideoInfo() {
     const url = document.getElementById('vurl').value.trim();
-    if (!url) return alert("Enter a valid video URL!");
+    if (!url) return alert("Please enter a link!");
     const msg = document.getElementById('dlmsg');
     const pBox = document.getElementById('preview-box');
     pBox.className = "preview"; 
-    msg.innerHTML = '<span class="pulse"></span>Extracting video media maps...';
+    msg.innerHTML = '<span class="pulse"></span>Fetching video formats...';
     msg.style.color = "var(--cyan)";
     try {
       const res = await fetch(serverTarget + '/info', {
@@ -153,13 +136,13 @@
       msg.innerHTML = "";
       pBox.className = "preview show";
     } catch(e) {
-      msg.textContent = "❌ Failed connecting to backend server.";
+      msg.textContent = "❌ Server is waking up or temporarily unreachable. Try again in a few seconds!";
       msg.style.color = "var(--red)";
     }
   }
   async function triggerDownload(url, format_id, ext) {
     const msg = document.getElementById('dlmsg');
-    msg.innerHTML = '<span class="pulse"></span>Downloading file directly to your browser bar...';
+    msg.innerHTML = '<span class="pulse"></span>Downloading video and converting tracks. Your browser will prompt download confirmation shortly...';
     msg.style.color = "var(--green)";
     try {
       const response = await fetch(serverTarget + '/download', {
@@ -167,7 +150,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, format_id })
       });
-      if (!response.ok) throw new Error("File error");
+      if (!response.ok) throw new Error("Download failed");
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -177,9 +160,9 @@
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
       a.remove();
-      msg.textContent = "✨ Download complete!";
+      msg.textContent = "✨ Saved successfully straight to your device!";
     } catch (error) {
-      msg.textContent = "❌ Error fetching download streams.";
+      msg.textContent = "❌ Processing timeout error on large files.";
       msg.style.color = "var(--red)";
     }
   }
